@@ -1,4 +1,5 @@
 /*
+NOTE:
   Since the DHT11/22 Temperature and Humidity and Analogue light sensors were not available for collection
   during this week, I used my soil moisture sensor from a previous unit to complete this task - as advised
   by my tutor via MSTeams.
