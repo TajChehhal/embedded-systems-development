@@ -66,22 +66,22 @@ void connectToWiFi() {
 
 // Sends sensor readings to ThingSpeak - bot raw and percentage
 void sendToThingSpeak(int rawValue, float percentage) {
-  // If wifi drops, reconnect
+  // Checks if WiFi is connected
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi disconnected. Reconnecting...");
-    connectToWiFi();
+    Serial.println("WiFi disconnected. Reconnecting..."); // Prints message to serial monitor
+    connectToWiFi(); // Calls function to reconnect WiFi
   }
 
-  ThingSpeak.setField(1, rawValue);
-  ThingSpeak.setField(2, percentage);
+  ThingSpeak.setField(1, rawValue); // Sends the raw sensor value to Field 1 on ThingSpeak
+  ThingSpeak.setField(2, percentage); // Sends the percentage value to Field 2 on ThingSpeak
 
-  int responseCode = ThingSpeak.writeFields(CHANNEL_ID, WRITE_API_KEY);
+  int responseCode = ThingSpeak.writeFields(CHANNEL_ID, WRITE_API_KEY); // Using channel ID and API key, uploads the data to ThingSpeak
 
-  if (responseCode == 200) {
-    Serial.println("ThingSpeak update successful.");
+  if (responseCode == 200) { // Checks if the upload was successful - code 200 means success
+    Serial.println("ThingSpeak update successful."); // Prints success message
   } else {
-    Serial.print("ThingSpeak error. HTTP code: ");
-    Serial.println(responseCode);
+    Serial.print("ThingSpeak error. HTTP code: "); // If failed, prints error message
+    Serial.println(responseCode); // Prints error code returned by ThingSpeak
   }
 }
 
@@ -101,12 +101,12 @@ void setup() {
   Serial.begin(9600);
   while (!Serial);  // Wait for Serial Monitor to open
 
-  pinMode(MOISTURE_PIN, INPUT);
+  pinMode(MOISTURE_PIN, INPUT); // Sets moisture sensor pin as an input
 
-  connectToWiFi();
-  ThingSpeak.begin(client);
+  connectToWiFi(); // Calls the function that connects the arduino to WiFi
+  ThingSpeak.begin(client); // Starts ThingSpeak communication using the client
 
-  Serial.println("Setup complete. Sending data every 30 seconds.");
+  Serial.println("Setup complete. Sending data every 30 seconds."); // Prints the setup complete message.
 }
 
 void loop() {
