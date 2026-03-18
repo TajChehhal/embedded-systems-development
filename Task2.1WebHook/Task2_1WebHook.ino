@@ -1,128 +1,119 @@
 /*
-NOTE:
-  Since the DHT11/22 Temperature and Humidity and Analogue light sensors were not available for collection
-  during this week, I used my soil moisture sensor from a previous unit to complete this task - as advised
-  by my tutor via MSTeams.
+  A soil moisture sensor was used alongside an ambient light sensor for this task, since the 
+  temperature and humidity sensor wasn't available for collection during the task submission week.
+  Field 1 = soil moisture value
+  Field 2 = light level in lux
+*/
 
-  Thus, my two fields that were being read were the raw soil moisture sensor readings and the converted
-  percentage from 0-100.
- */
+#include <WiFiNINA.h> // Library for WiFi connection
+#include <ThingSpeak.h> // Library to send data to ThingSpeak
+#include <Wire.h> // Library for I2C communication
+#include <BH1750.h> // Library for light sensor
 
-// Includes libraries
-#include <WiFiNINA.h>
-#include <ThingSpeak.h>
+const char* WIFI_SSID     = "WIFI_SSID"; // WiFi name
+const char* WIFI_PASSWORD = "WIFI_PASSWORD"; // WiFi password
 
-// WiFi credentials 
-const char* WIFI_SSID     = "WIFI_SSID"; // I have taken out my personal WiFi SSID here as well as password       
-const char* WIFI_PASSWORD = "WIFI_PASSWORD";   
+const unsigned long CHANNEL_ID    = CHANNEL_ID; // ThingSpeak channel ID
+const char*         WRITE_API_KEY = "API_KEY"; // ThingSpeak API key
 
-// ThingSpeak settings 
-const unsigned long CHANNEL_ID      = CHANNEL_ID; // I have taken out my ThingSpeak settings as well       
-const char*         WRITE_API_KEY   = "API_KEY"; 
+const int MOISTURE_PIN = A0; // Pin for soil moisture sensor
 
-// Pin definitions 
-const int MOISTURE_PIN = A0;
+const unsigned long SEND_INTERVAL_MS = 30000UL; // Send data every 30 seconds
 
-// Timing for 30 seconds
-const unsigned long SEND_INTERVAL_MS = 30000UL; // 30 seconds
+WiFiClient client; // Create WiFi client object
+BH1750 lightMeter; // Create light sensor object
+unsigned long lastSendTime = 0; // Stores last send time
 
-// Globals 
-WiFiClient client;
-unsigned long lastSendTime = 0;
-
-// Reads the raw analog value from the soil moisture sensor. Returns a value between 0 (dry) and 1023 (wet).
 int readMoistureRaw() {
-  return analogRead(MOISTURE_PIN);
+  return analogRead(MOISTURE_PIN); // Read moisture value from sensor
 }
 
-// Converts the raw moisture reading to a percentage (0–100%).
-float convertToPercentage(int rawValue) {
-  return map(rawValue, 0, 1023, 0, 100);
+float readLightLevel() {
+  return lightMeter.readLightLevel(); // Read light level from sensor
 }
 
-// Connects to WiFi. Blocks until connected or prints an error.
 void connectToWiFi() {
-  Serial.print("Connecting to WiFi: ");
-  Serial.println(WIFI_SSID);
+  Serial.print("Connecting to WiFi: "); // Print message
+  Serial.println(WIFI_SSID); // Show WiFi name
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD); // Start WiFi connection
+  int attempts = 0; // Counter for attempts
 
-  int status = WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  int attempts = 0;
-
-  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-    delay(500);
-    Serial.print(".");
-    attempts++;
+  while (WiFi.status() != WL_CONNECTED && attempts < 20) { // Try to connect
+    delay(500); // Wait 0.5 seconds
+    Serial.print("."); // Show progress
+    attempts++; // Increase attempts
   }
 
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\nWiFi connected.");
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
+  if (WiFi.status() == WL_CONNECTED) { // If connected
+    Serial.println("\nWiFi connected."); // Success message
+    Serial.print("IP address: "); // Print IP label
+    Serial.println(WiFi.localIP()); // Show IP address
   } else {
-    Serial.println("\nFailed to connect to WiFi. Check credentials.");
+    Serial.println("\nFailed to connect to WiFi. Check credentials."); // Error message
   }
 }
 
-
-// Sends sensor readings to ThingSpeak - bot raw and percentage
-void sendToThingSpeak(int rawValue, float percentage) {
-  // Checks if WiFi is connected
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi disconnected. Reconnecting..."); // Prints message to serial monitor
-    connectToWiFi(); // Calls function to reconnect WiFi
+void sendToThingSpeak(int moistureRaw, float lightLux) {
+  if (WiFi.status() != WL_CONNECTED) { // Check WiFi connection
+    Serial.println("WiFi disconnected. Reconnecting..."); // Message
+    connectToWiFi(); // Reconnect WiFi
   }
 
-  ThingSpeak.setField(1, rawValue); // Sends the raw sensor value to Field 1 on ThingSpeak
-  ThingSpeak.setField(2, percentage); // Sends the percentage value to Field 2 on ThingSpeak
+  ThingSpeak.setField(1, moistureRaw); // Set field 1 (moisture)
+  ThingSpeak.setField(2, lightLux); // Set field 2 (light)
 
-  int responseCode = ThingSpeak.writeFields(CHANNEL_ID, WRITE_API_KEY); // Using channel ID and API key, uploads the data to ThingSpeak
+  int responseCode = ThingSpeak.writeFields(CHANNEL_ID, WRITE_API_KEY); // Send data
 
-  if (responseCode == 200) { // Checks if the upload was successful - code 200 means success
-    Serial.println("ThingSpeak update successful."); // Prints success message
+  if (responseCode == 200) { // If success
+    Serial.println("ThingSpeak update successful."); // Success message
   } else {
-    Serial.print("ThingSpeak error. HTTP code: "); // If failed, prints error message
-    Serial.println(responseCode); // Prints error code returned by ThingSpeak
+    Serial.print("ThingSpeak error. HTTP code: "); // Error message
+    Serial.println(responseCode); // Show error code
   }
 }
 
-// Prints the current sensor readings in the Serial Monitor
-void printReadings(int rawValue, float percentage) {
+void printReadings(int moistureRaw, float lightLux) {
   Serial.println("──────────────────────────────");
-  Serial.print("Moisture Raw:        ");
-  Serial.println(rawValue);
-  Serial.print("Moisture Percentage: ");
-  Serial.print(percentage, 1);
-  Serial.println("%");
-  Serial.println("──────────────────────────────");
+  Serial.print("Soil Moisture (raw): ");
+  Serial.println(moistureRaw); // Show moisture value
+  Serial.print("Light Level (lux):   ");
+  Serial.print(lightLux, 1); // Show light value to 1 decimal place
+  Serial.println(" lx"); // Unit
+  Serial.println("──────────────────────────────"); 
 }
-
 
 void setup() {
-  Serial.begin(9600);
-  while (!Serial);  // Wait for Serial Monitor to open
+  Serial.begin(9600); // Start serial communication
+  while (!Serial); // Wait for serial monitor
 
-  pinMode(MOISTURE_PIN, INPUT); // Sets moisture sensor pin as an input
+  pinMode(MOISTURE_PIN, INPUT); // Set moisture pin as input
 
-  connectToWiFi(); // Calls the function that connects the arduino to WiFi
-  ThingSpeak.begin(client); // Starts ThingSpeak communication using the client
+  Wire.begin(); // Start I2C communication
 
-  Serial.println("Setup complete. Sending data every 30 seconds."); // Prints the setup complete message.
+  if (lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE)) { // Start light sensor
+    Serial.println("BH1750 initialised."); // Success message
+  } else {
+    Serial.println("BH1750 failed to initialise. Check wiring."); // Error message
+  }
+
+  connectToWiFi(); // Connect to WiFi
+
+  ThingSpeak.begin(client); // Start ThingSpeak
+
+  Serial.println("Setup complete. Sending data every 30 seconds."); // Ready message
 }
 
 void loop() {
-  unsigned long currentTime = millis();
+  unsigned long currentTime = millis(); // Get current time
 
-  if (currentTime - lastSendTime >= SEND_INTERVAL_MS) {
-    lastSendTime = currentTime;
+  if (currentTime - lastSendTime >= SEND_INTERVAL_MS) { // Check if 30s passed
+    lastSendTime = currentTime; // Update last send time
 
-    // Read sensor
-    int   rawValue   = readMoistureRaw();
-    float percentage = convertToPercentage(rawValue);
+    int   moistureRaw = readMoistureRaw(); // Read moisture
+    float lightLux    = readLightLevel();  // Read light
 
-    // Display locally
-    printReadings(rawValue, percentage);
+    printReadings(moistureRaw, lightLux); // Print values
 
-    // Send to ThingSpeak
-    sendToThingSpeak(rawValue, percentage);
+    sendToThingSpeak(moistureRaw, lightLux); // Send data to cloud
   }
 }
