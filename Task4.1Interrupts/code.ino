@@ -21,8 +21,8 @@ void onPIR() {
   unsigned long now = millis(); // Get current time
 
   if (now - lastPirTime > DEBOUNCE_MS) { // Check debounce
-    pirTriggered = true; // Set PIR flag
-    lastPirTime  = now;  // Update last time
+    pirTriggered = true; // Set PIR flag to True
+    lastPirTime  = now;  // Update last PirTime
   }
 }
 
@@ -45,12 +45,12 @@ void setup() {
 
   pinMode(LED1_PIN, OUTPUT); // Set LED1 as output
   pinMode(LED2_PIN, OUTPUT); // Set LED2 as output
-  setLEDs(false);            // Turn LEDs OFF
+  setLEDs(false); // Turn LEDs OFF
 
-  pinMode(PIR_PIN, INPUT);    // Set PIR as input
+  pinMode(PIR_PIN, INPUT); // Set PIR as input
   pinMode(SLIDER_PIN, INPUT); // Set slider as input
 
-  attachInterrupt(digitalPinToInterrupt(PIR_PIN), onPIR, RISING);   // Interrupt for PIR
+  attachInterrupt(digitalPinToInterrupt(PIR_PIN), onPIR, RISING); // Interrupt for PIR
   attachInterrupt(digitalPinToInterrupt(SLIDER_PIN), onSlider, CHANGE); // Interrupt for slider
 
   Wire.begin(); // Start I2C
@@ -63,7 +63,7 @@ void setup() {
 
   Serial.println("[SYSTEM] Task 4.1 Interrupts ready."); // Ready message
   Serial.println("[SYSTEM] Waiting for motion or switch event..."); // Waiting message
-  Serial.println("-----------------------------------------"); // Divider
+  Serial.println("-----------------------------------------"); 
 }
 
 void loop() {
@@ -76,16 +76,16 @@ void loop() {
     if (lux < DARK_THRESHOLD) { // If dark
       setLEDs(true); // Turn LEDs ON
 
-      Serial.print("[PIR]    Motion detected in the dark ("); // Message
+      Serial.print("[PIR]    Motion detected in the dark ("); 
       Serial.print(lux); // Show light value
-      Serial.println(" lux) — lights turned ON."); // Message
-      Serial.println("-----------------------------------------"); // Divider
+      Serial.println(" lux) — lights turned ON."); 
+      Serial.println("-----------------------------------------"); 
 
     } else { // If bright
-      Serial.print("[PIR]    Motion detected but it is bright ("); // Message
+      Serial.print("[PIR]    Motion detected but it is bright ("); 
       Serial.print(lux); // Show light value
-      Serial.println(" lux) — lights left OFF."); // Message
-      Serial.println("-----------------------------------------"); // Divider
+      Serial.println(" lux) — lights left OFF.");
+      Serial.println("-----------------------------------------");
     }
   }
 
@@ -96,12 +96,12 @@ void loop() {
     setLEDs(sliderOn); // Set LEDs based on slider
 
     if (sliderOn) { // If switch ON
-      Serial.println("[SWITCH] Backup switch activated — lights turned ON."); // Message
+      Serial.println("[SWITCH] Backup switch activated — lights turned ON.");
     } else { // If switch OFF
-      Serial.println("[SWITCH] Backup switch deactivated — lights turned OFF."); // Message
+      Serial.println("[SWITCH] Backup switch deactivated — lights turned OFF."); 
     }
 
-    Serial.println("-----------------------------------------"); // Divider
+    Serial.println("-----------------------------------------"); 
   }
 
   delay(50); 
