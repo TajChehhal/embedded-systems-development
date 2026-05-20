@@ -79,7 +79,7 @@ COOLDOWN_SECONDS = 5
 # --- THINGSPEAK ---
 
 # ThingSpeak API key
-THINGSPEAK_API_KEY = "619GJBQSOTKM7I4A"
+THINGSPEAK_API_KEY = "ENTER_YOUR_API_KEY_HERE"
 
 # ThingSpeak channel URL
 THINGSPEAK_URL = "https://api.thingspeak.com/update"
